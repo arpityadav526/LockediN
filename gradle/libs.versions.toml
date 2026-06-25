@@ -63,7 +63,7 @@ lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 # PDF Viewer
-pdf-viewer = { group = "com.github.barteksc", name = "android-pdf-viewer", version.ref = "pdfViewer" }
+pdf-viewer = { group = "com.github.mhiew", name = "android-pdf-viewer", version.ref = "pdfViewer" }
 
 # Core
 core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

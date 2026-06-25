@@ -22,6 +22,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AiChatScreen(
+    onBack: () -> Unit,
     viewModel: AiChatViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -44,6 +45,11 @@ fun AiChatScreen(
                     text = "AI Study Assistant",
                     style = MaterialTheme.typography.titleLarge
                 )
+            },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                }
             },
             actions = {
                 if (uiState.messages.isNotEmpty()) {

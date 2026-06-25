@@ -33,10 +33,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    @Named("openai")
-    fun provideOpenAiRetrofit(okHttpClient: OkHttpClient): Retrofit =
+    @Named("gemini")
+    fun provideGeminiRetrofit(okHttpClient: OkHttpClient): Retrofit =
         Retrofit.Builder()
-            .baseUrl("https://api.openai.com/")
+            .baseUrl("https://generativelanguage.googleapis.com/")
             .client(okHttpClient)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

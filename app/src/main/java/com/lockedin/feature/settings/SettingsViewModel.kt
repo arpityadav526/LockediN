@@ -21,7 +21,8 @@ import javax.inject.Inject
 data class SettingsUiState(
     val isLocked: Boolean = false,
     val storageUsed: String = "0 B",
-    val appVersion: String = "1.0"
+    val appVersion: String = "1.0",
+    val aiApiKey: String = ""
 )
 
 @HiltViewModel
@@ -39,6 +40,11 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             appPreferences.isLocked.collect { locked ->
                 _uiState.update { it.copy(isLocked = locked ?: false) }
+            }
+        }
+        viewModelScope.launch {
+            appPreferences.aiApiKey.collect { key ->
+                _uiState.update { it.copy(aiApiKey = key ?: "") }
             }
         }
         updateStorageUsed()
@@ -81,6 +87,12 @@ class SettingsViewModel @Inject constructor(
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(intent)
+    }
+
+    fun setAiApiKey(key: String) {
+        viewModelScope.launch {
+            appPreferences.setAiApiKey(key)
+        }
     }
 
     fun openDeviceAdminSettings() {

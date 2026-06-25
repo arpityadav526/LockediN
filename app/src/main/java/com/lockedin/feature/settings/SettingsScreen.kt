@@ -33,6 +33,7 @@ fun SettingsScreen(
     var showChangePinDialog by remember { mutableStateOf(false) }
     var showDeleteFilesDialog by remember { mutableStateOf(false) }
     var showClearChatDialog by remember { mutableStateOf(false) }
+    var showApiKeyDialog by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.fillMaxSize()) {
         TopAppBar(
@@ -146,6 +147,47 @@ fun SettingsScreen(
                                 style = MaterialTheme.typography.bodyLarge,
                                 modifier = Modifier.weight(1f)
                             )
+                            Icon(
+                                Icons.Default.ChevronRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            // AI Settings
+            item {
+                SettingsSection(title = "AI Assistant") {
+                    Card(
+                        onClick = { showApiKeyDialog = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = MaterialTheme.shapes.medium,
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.Key,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text("Gemini API Key", style = MaterialTheme.typography.bodyLarge)
+                                Text(
+                                    if (uiState.aiApiKey.isNotBlank()) "Key is configured" else "No key configured",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (uiState.aiApiKey.isNotBlank()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                                )
+                            }
                             Icon(
                                 Icons.Default.ChevronRight,
                                 contentDescription = null,
@@ -365,6 +407,33 @@ fun SettingsScreen(
                 TextButton(onClick = { showDeleteFilesDialog = false }) {
                     Text("Cancel")
                 }
+            }
+        )
+    }
+
+    // API Key Dialog
+    if (showApiKeyDialog) {
+        var tempKey by remember { mutableStateOf(uiState.aiApiKey) }
+        AlertDialog(
+            onDismissRequest = { showApiKeyDialog = false },
+            title = { Text("Gemini API Key") },
+            text = {
+                OutlinedTextField(
+                    value = tempKey,
+                    onValueChange = { tempKey = it },
+                    label = { Text("API Key") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setAiApiKey(tempKey)
+                    showApiKeyDialog = false
+                }) { Text("Save") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showApiKeyDialog = false }) { Text("Cancel") }
             }
         )
     }

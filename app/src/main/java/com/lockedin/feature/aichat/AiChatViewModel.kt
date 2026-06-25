@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.lockedin.BuildConfig
 import com.lockedin.data.db.entity.ChatMessageEntity
+import com.lockedin.data.preferences.AppPreferences
 import com.lockedin.data.repository.ChatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
@@ -19,7 +20,8 @@ data class AiChatUiState(
 @HiltViewModel
 class AiChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
-    private val openAiService: OpenAiService
+    private val geminiService: GeminiService,
+    private val appPreferences: AppPreferences
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AiChatUiState())
@@ -56,28 +58,69 @@ class AiChatViewModel @Inject constructor(
             try {
                 // Build message history for API
                 val currentMessages = _uiState.value.messages
-                val apiMessages = mutableListOf(
-                    OpenAiMessage(role = "system", content = systemPrompt)
+                val systemInst = GeminiSystemInstruction(
+                    parts = listOf(GeminiPart(text = systemPrompt))
                 )
+
+                // Gemini uses "user" and "model" as roles
+                val apiMessages = mutableListOf<GeminiContent>()
 
                 // Add recent conversation context (last 10 messages)
                 val recentMessages = currentMessages.takeLast(10)
                 recentMessages.forEach { msg ->
-                    apiMessages.add(OpenAiMessage(role = msg.role, content = msg.content))
+                    // Convert our role to Gemini's role ("user" stays "user", "assistant" becomes "model")
+                    val geminiRole = if (msg.role == "assistant") "model" else "user"
+                    
+                    if (apiMessages.isEmpty() && geminiRole == "model") {
+                        // Gemini conversations must start with a 'user' message. Skip if first is 'model'
+                        return@forEach
+                    }
+
+                    if (apiMessages.isNotEmpty() && apiMessages.last().role == geminiRole) {
+                        // Consecutive messages with the same role. Append text.
+                        val lastMsg = apiMessages.last()
+                        val newText = lastMsg.parts.first().text + "\n\n" + msg.content
+                        apiMessages[apiMessages.lastIndex] = lastMsg.copy(parts = listOf(GeminiPart(text = newText)))
+                    } else {
+                        apiMessages.add(
+                            GeminiContent(
+                                role = geminiRole,
+                                parts = listOf(GeminiPart(text = msg.content))
+                            )
+                        )
+                    }
                 }
 
                 // Add the new user message
-                apiMessages.add(OpenAiMessage(role = "user", content = content.trim()))
+                if (apiMessages.isNotEmpty() && apiMessages.last().role == "user") {
+                    val lastMsg = apiMessages.last()
+                    val newText = lastMsg.parts.first().text + "\n\n" + content.trim()
+                    apiMessages[apiMessages.lastIndex] = lastMsg.copy(parts = listOf(GeminiPart(text = newText)))
+                } else {
+                    apiMessages.add(
+                        GeminiContent(
+                            role = "user",
+                            parts = listOf(GeminiPart(text = content.trim()))
+                        )
+                    )
+                }
 
-                val apiKey = BuildConfig.OPENAI_API_KEY
-                val response = openAiService.createChatCompletion(
-                    authorization = "Bearer $apiKey",
-                    request = ChatCompletionRequest(
-                        messages = apiMessages
+                val savedKey = appPreferences.aiApiKey.firstOrNull()
+                val apiKey = if (!savedKey.isNullOrBlank()) savedKey else BuildConfig.OPENAI_API_KEY
+                
+                if (apiKey.isBlank() || apiKey == "your_openai_key_here") {
+                    throw IllegalArgumentException("API Key is missing. Please set it in Settings.")
+                }
+
+                val response = geminiService.generateContent(
+                    apiKey = apiKey,
+                    request = GeminiRequest(
+                        contents = apiMessages,
+                        systemInstruction = systemInst
                     )
                 )
 
-                val assistantContent = response.choices?.firstOrNull()?.message?.content
+                val assistantContent = response.candidates?.firstOrNull()?.content?.parts?.firstOrNull()?.text
                     ?: "I couldn't generate a response. Please try again."
 
                 // Save assistant message
@@ -91,8 +134,9 @@ class AiChatViewModel @Inject constructor(
                 _uiState.update { it.copy(isLoading = false) }
             } catch (e: Exception) {
                 val errorMsg = when {
+                    e.message?.contains("API Key is missing") == true -> e.message!!
                     e.message?.contains("Unable to resolve host") == true -> "No internet connection"
-                    e.message?.contains("401") == true -> "Invalid API key"
+                    e.message?.contains("401") == true -> "Invalid API key. Check Settings."
                     else -> "Something went wrong. Please try again."
                 }
                 _uiState.update { it.copy(isLoading = false, error = errorMsg) }

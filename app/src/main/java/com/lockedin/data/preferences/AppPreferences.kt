@@ -22,6 +22,7 @@ class AppPreferences @Inject constructor(
         val PIN_SET = booleanPreferencesKey("PIN_SET")
         val TOTAL_STUDY_MINUTES = intPreferencesKey("TOTAL_STUDY_MINUTES")
         val POMODORO_CYCLES = intPreferencesKey("POMODORO_CYCLES")
+        val AI_API_KEY = stringPreferencesKey("AI_API_KEY")
     }
 
     val isLocked: Flow<Boolean?> = context.dataStore.data.map { prefs ->
@@ -42,6 +43,10 @@ class AppPreferences @Inject constructor(
 
     val pomodoroCycles: Flow<Int> = context.dataStore.data.map { prefs ->
         prefs[Keys.POMODORO_CYCLES] ?: 0
+    }
+
+    val aiApiKey: Flow<String?> = context.dataStore.data.map { prefs ->
+        prefs[Keys.AI_API_KEY]
     }
 
     suspend fun setLocked(isLocked: Boolean) {
@@ -80,6 +85,12 @@ class AppPreferences @Inject constructor(
         context.dataStore.edit { prefs ->
             val current = prefs[Keys.POMODORO_CYCLES] ?: 0
             prefs[Keys.POMODORO_CYCLES] = current + 1
+        }
+    }
+
+    suspend fun setAiApiKey(key: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.AI_API_KEY] = key
         }
     }
 }

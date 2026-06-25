@@ -38,6 +38,11 @@ fun FilesScreen(
                     style = MaterialTheme.typography.titleLarge
                 )
             },
+            navigationIcon = {
+                IconButton(onClick = { navController.popBackStack() }) {
+                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                }
+            },
             colors = TopAppBarDefaults.topAppBarColors(
                 containerColor = MaterialTheme.colorScheme.background
             )

@@ -8,6 +8,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
@@ -68,7 +69,7 @@ fun AppNavigation(
             if (showBottomBar) {
                 NavigationBar(
                     containerColor = MaterialTheme.colorScheme.surface,
-                    tonalElevation = androidx.compose.ui.unit.dp.times(2)
+                    tonalElevation = 2.dp
                 ) {
                     bottomNavItems.forEach { item ->
                         val selected = currentDestination?.hierarchy?.any {
@@ -144,7 +145,7 @@ fun AppNavigation(
             }
 
             composable(Routes.AI_CHAT) {
-                AiChatScreen()
+                AiChatScreen(onBack = { navController.popBackStack() })
             }
 
             composable(Routes.CALCULATOR) {
@@ -160,7 +161,7 @@ fun AppNavigation(
             }
 
             composable(Routes.NOTES) {
-                NotesScreen()
+                NotesScreen(onBack = { navController.popBackStack() })
             }
 
             composable(Routes.CONVERTER) {

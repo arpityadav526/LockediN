@@ -6,7 +6,7 @@ import com.lockedin.data.db.AppDatabase
 import com.lockedin.data.db.dao.ChatMessageDao
 import com.lockedin.data.db.dao.FileDao
 import com.lockedin.data.db.dao.NoteDao
-import com.lockedin.feature.aichat.OpenAiService
+import com.lockedin.feature.aichat.GeminiService
 import com.lockedin.feature.tools.dictionary.DictionaryApiService
 import dagger.Module
 import dagger.Provides
@@ -41,8 +41,8 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideOpenAiService(@Named("openai") retrofit: Retrofit): OpenAiService =
-        retrofit.create(OpenAiService::class.java)
+    fun provideGeminiService(@Named("gemini") retrofit: Retrofit): GeminiService =
+        retrofit.create(GeminiService::class.java)
 
     @Provides
     @Singleton
